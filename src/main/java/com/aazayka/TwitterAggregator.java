@@ -14,6 +14,8 @@ import org.interview.oauth.twitter.TwitterAuthenticator;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -26,10 +28,12 @@ public class TwitterAggregator {
 
     private static final String CONSUMER_KEY = "RLSrphihyR4G2UxvA0XBkLAdl";
     private static final String CONSUMER_SECRET = "FTz2KcP1y3pcLw0XXMX5Jy3GTobqUweITIFy4QefullmpPnKm4";
-    public static final int MESSAGE_COUNT_LIMIT = 50;
-    public static final int TIME_LIMIT = 30_000;
-    public static final String BIBER_URL = "https://stream.twitter.com/1.1/statuses/filter.json?track=bieber";
+    private static final int MESSAGE_COUNT_LIMIT = 50;
+    private static final int TIME_LIMIT = 30_000;
+    private static final String BIBER_URL = "https://stream.twitter.com/1.1/statuses/filter.json?track=bieber";
 
+    private static final DateTimeFormatter DATE_FORMATTER =
+            DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss Z yyyy", Locale.ENGLISH);
 
     public static void main(String[] args) throws TwitterAuthenticationException, IOException {
         TwitterAuthenticator twitterAuthenticator = new TwitterAuthenticator(System.out, CONSUMER_KEY, CONSUMER_SECRET);
@@ -46,24 +50,10 @@ public class TwitterAggregator {
         if (response.getStatusCode() != 200) {
             log.error("Invalid response code " + response.getStatusCode());
         }
+
         try(BufferedReader reader = new BufferedReader(new InputStreamReader(response.getContent()))) {
             final long[] last_message_sent_time = {System.currentTimeMillis()};
-            final Function<JsonObject, JsonObject> twitterConverter = (JsonObject obj) -> {
-                JsonObject out = new JsonObject();
-                out.addProperty("id", obj.get("id").getAsLong());
-                out.addProperty("timestamp", obj.get("timestamp_ms").getAsLong() / 1000);
-                out.addProperty("text", obj.get("text").getAsString());
-                JsonObject author = obj.get("user").getAsJsonObject();
-                out.addProperty("author_id", author.get("id").getAsLong());
-                //TODO: convert to epoch
-                //out.addProperty("created_at", author.get("created_at").getAsString());
-                out.addProperty("created_at", obj.get("timestamp_ms").getAsLong() / 1000);
-                out.addProperty("name", author.get("name").getAsString());
-                out.addProperty("screen_name", author.get("screen_name").getAsString());
-                return out;
-            };
 
-//            Map<Author, Set<Message>> map =
             reader.lines()
                     .takeWhile((tmp) -> System.currentTimeMillis() <= start + TIME_LIMIT)
                     .limit(MESSAGE_COUNT_LIMIT)
@@ -72,44 +62,27 @@ public class TwitterAggregator {
                         last_message_sent_time[0] = System.currentTimeMillis();
                         System.out.println(msg);
                     })
-                    .map(str -> new Gson().fromJson(str, JsonObject.class))
-                    .map(twitterConverter)
+                    .map(Message::createFromJson)
                     .collect(groupingBy(
-                            getAuthor(),
-                            () -> new TreeMap<>(Comparator.comparing(Author::getCreated).thenComparing(Author::getId)),
-                            Collectors.mapping(
-                                    getMessage(),
-                                    Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Message::getTimestamp)))
-                            )
+                            Message::getAuthor,
+                            () -> new TreeMap<>(
+                                    Comparator.comparing(Author::getCreated)
+                                            .thenComparing(Author::getId)),
+                            Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Message::getTimestamp)))
                     ))
                     .forEach(TwitterAggregator::printMapInstance)
             ;
         }
     }
 
-    private static Function<JsonObject, Message> getMessage() {
-        return (JsonObject obj) -> new Message(
-                obj.get("id").getAsLong(),
-                obj.get("timestamp").getAsLong(),
-                obj.get("text").getAsString(),
-                obj.get("author_id").getAsLong());
-    }
-
-    private static Function<JsonObject, Author> getAuthor() {
-        return (JsonObject obj) -> new Author(
-                obj.get("author_id").getAsLong(),
-                obj.get("created_at").getAsLong(),
-                obj.get("name").getAsString(),
-                obj.get("screen_name").getAsString());
-    }
-
     private static void printMapInstance(Author author, TreeSet<Message> msgList) {
-        JsonObject json = (new Gson()).toJsonTree(author, Author.class).getAsJsonObject();
+        JsonObject json = new JsonObject();
+        json.add("author", (new Gson()).toJsonTree(author));
         JsonArray msgJson = new Gson().toJsonTree(msgList,
                 new TypeToken<Set<Message>>() {
                 }.getType()).getAsJsonArray();
         json.add("messages", msgJson);
-        System.out.println(json.toString());
+        System.out.println(json);
     }
 
     @Value
@@ -125,7 +98,29 @@ public class TwitterAggregator {
         long id;
         long timestamp;
         String text;
-        long authorId;
+        Author author;
+
+        static Message createFromJson(String inputStr) {
+            // TODO: is it possible to create the class directly from Gson().fromJson()?
+            JsonObject inputObj = new Gson().fromJson(inputStr, JsonObject.class);
+            return new Message(
+                    inputObj.get("id").getAsLong(),
+                    inputObj.get("timestamp_ms").getAsLong() / 1000,
+                    inputObj.get("text").getAsString(),
+                    // TODO:Cache and return authors?
+                    new Author(
+                            inputObj.get("user").getAsJsonObject().get("id").getAsLong(),
+                            convertToEpochSeconds(inputObj.get("user").getAsJsonObject().get("created_at").getAsString()),
+                            inputObj.get("user").getAsJsonObject().get("name").getAsString(),
+                            inputObj.get("user").getAsJsonObject().get("screen_name").getAsString()
+
+                    )
+            );
+        }
+
+        private static long convertToEpochSeconds(String dateTimeStr) {
+            return ZonedDateTime.parse(dateTimeStr, DATE_FORMATTER).toEpochSecond();
+        }
     }
 
 }
