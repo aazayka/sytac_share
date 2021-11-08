@@ -22,7 +22,6 @@ public class TwitterReaderImpl implements TwitterReader {
     public InputStream getContent() throws TwitterAuthenticationException, TwitterReadException, IOException {
         TwitterAuthenticator twitterAuthenticator = new TwitterAuthenticator(System.out, CONSUMER_KEY, CONSUMER_SECRET);
         HttpRequestFactory httpRequestFactory = twitterAuthenticator.getAuthorizedHttpRequestFactory();
-        //TODO: check
         HttpRequest request = httpRequestFactory.buildRequest("POST", new GenericUrl(BIBER_URL), null);
 
         HttpResponse response = request.execute();
