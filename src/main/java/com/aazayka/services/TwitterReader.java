@@ -7,5 +7,5 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public interface TwitterReader {
-    public InputStream getContent() throws TwitterAuthenticationException, TwitterReadException, IOException;
+    InputStream getContent() throws TwitterAuthenticationException, TwitterReadException, IOException;
 }

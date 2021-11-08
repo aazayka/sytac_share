@@ -7,7 +7,7 @@ import java.util.Locale;
 
 public class DateConverter {
 
-    private static final DateTimeFormatter DATE_FORMATTER =
+    public static final DateTimeFormatter DATE_FORMATTER =
             DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss Z yyyy", Locale.ENGLISH);
 
     public long convertToEpochSeconds(String dateTimeStr) {
