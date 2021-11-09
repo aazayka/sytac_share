@@ -22,9 +22,10 @@ public class Message {
 
     public static Message createFromJson(String inputStr) {
         JsonObject inputObj = (new Gson()).fromJson(inputStr, JsonObject.class);
-        JsonObject authorObject = inputObj.get("user").getAsJsonObject();
-        if (authorObject == null)
+        if (inputObj.get("user") == null)
             return null;
+        JsonObject authorObject = inputObj.get("user").getAsJsonObject();
+
         Message message =
                 new Message(
                         inputObj.get("id").getAsLong(),

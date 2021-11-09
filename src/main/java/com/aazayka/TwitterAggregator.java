@@ -46,7 +46,7 @@ public class TwitterAggregator {
                         log.debug(msg);
                     })
                     .map(Message::createFromJson)
-                    .filter(message -> message != null)
+                    .filter(Objects::nonNull)
                     .collect(groupingBy(
                             Message::getAuthor,
                             () -> new TreeMap<>(

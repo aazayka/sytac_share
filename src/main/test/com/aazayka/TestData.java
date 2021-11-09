@@ -1,13 +1,16 @@
 package com.aazayka;
 
+import com.aazayka.entities.Author;
 import com.aazayka.services.DateConverter;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 
 public class TestData {
-    private JsonObject jsonMessage;
+    private final JsonObject jsonMessage;
     private static final String AUTHOR_CREATED_STR = "Tue Aug 21 16:27:51 +0000 1900";
     private static final long AUTHOR_ID = 0L;
     private static final String AUTHOR_NAME = "Sample author";
@@ -112,13 +115,15 @@ public class TestData {
         jsonMessage = gson.fromJson(SAMPLE_MESSAGE, JsonObject.class);
     }
 
-    public TestData withAuthor(long id, String name, ZonedDateTime created) {
-        JsonObject author = jsonMessage.get("user").getAsJsonObject();
-        author.addProperty("id", id);
-        author.addProperty("id_str", Long.toString(id));
-        author.addProperty("name", name);
-        author.addProperty("screen_name", name);
-        author.addProperty("created_at", created.format(DateConverter.DATE_FORMATTER));
+    public TestData withAuthor(Author author) {
+        JsonObject authorJson = jsonMessage.get("user").getAsJsonObject();
+        authorJson.addProperty("id", author.getId());
+        authorJson.addProperty("id_str", Long.toString(author.getId()));
+        authorJson.addProperty("name", author.getName());
+        authorJson.addProperty("screen_name", author.getScreenName());
+        authorJson.addProperty("created_at",
+                ZonedDateTime.ofInstant(Instant.ofEpochSecond(author.getCreated()), ZoneOffset.UTC)
+                        .format(DateConverter.DATE_FORMATTER));
         return this;
     }
 

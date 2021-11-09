@@ -18,12 +18,6 @@ public class TwitterAggregatorApp {
         Map<Author, Collection<Message>> messages = twitterAggregator.collect();
         new ResultPrinterImpl(System.out).print(messages);
 
-        //TODO: add custom deserializer because of date fields
-
-        //TODO: unitTests - make them convinient
-
-        //TODO: check the naming
-
         //TODO: add Docker support
 
         //TODO: save message rate
