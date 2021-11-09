@@ -4,8 +4,6 @@ import com.aazayka.entities.Author;
 import com.aazayka.entities.Message;
 import com.aazayka.exceptions.TwitterReadException;
 import com.aazayka.services.TwitterReader;
-import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.interview.oauth.twitter.TwitterAuthenticationException;
@@ -13,11 +11,7 @@ import org.interview.oauth.twitter.TwitterAuthenticationException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static java.util.stream.Collectors.groupingBy;
@@ -27,20 +21,19 @@ import static java.util.stream.Collectors.groupingBy;
 public class TwitterAggregator {
     private static final int MESSAGE_COUNT_LIMIT = 50;
     private static final int TIME_LIMIT_MILLIS = 30_000;
-    private static final GsonBuilder GSON_BUILDER = new GsonBuilder();
 
     private final TwitterReader twitterReader;
-    private final PrintStream writer;
 
 
-    public void process() throws TwitterReadException, TwitterAuthenticationException, IOException {
+    public Map<Author, Collection<Message>> collect() throws TwitterReadException, TwitterAuthenticationException, IOException {
         final long[] lastMessageSentTime = {System.currentTimeMillis()};
         final int[] messageCount = {0};
         log.debug("Start reading messages");
+        TreeMap<Author, Collection<Message>> messagesByAuthor;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(twitterReader.getContent()))) {
             final long start = System.currentTimeMillis();
             log.debug("Start time: {}", start);
-            reader.lines()
+            messagesByAuthor = reader.lines()
                     .takeWhile((tmp) -> System.currentTimeMillis() <= start + TIME_LIMIT_MILLIS)
                     .limit(MESSAGE_COUNT_LIMIT)
                     //this is not exactly what required in task, but still some message rate
@@ -60,23 +53,10 @@ public class TwitterAggregator {
                                     Comparator.comparing(Author::getCreated)
                                             .thenComparing(Author::getId)),
                             Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Message::getTimestamp)))
-                    ))
-            .forEach(this::printByAuthor);
+                    ));
+
             log.debug("Message count: {}; finish time, ms: {}", messageCount[0], System.currentTimeMillis());
         }
-    }
-
-    void printByAuthor(Author author, Collection<Message> messages) {
-        GSON_BUILDER.setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES);
-        Gson gson = GSON_BUILDER.create();
-
-        JsonObject json = new JsonObject();
-        json.add("author", gson.toJsonTree(author));
-        JsonArray msgJson = gson.toJsonTree(messages,
-                new TypeToken<Collection<Message>>() {
-                }.getType()).getAsJsonArray();
-        json.add("messages", msgJson);
-
-        writer.println(json);
+        return messagesByAuthor;
     }
 }

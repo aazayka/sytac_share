@@ -1,7 +1,5 @@
 package com.aazayka;
 
-import com.aazayka.entities.Author;
-import com.aazayka.entities.Message;
 import com.aazayka.services.TwitterReader;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -15,9 +13,10 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
+import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -32,8 +31,6 @@ class TwitterAggregatorTest {
     @BeforeAll
     static void setupPrinter() {
         producer = () -> new ByteArrayInputStream(producerSource.toString().getBytes());
-
-        redirectedOut = new ByteArrayOutputStream();
         twitterAggregator = new TwitterAggregator(producer, new PrintStream(redirectedOut));
     }
 
@@ -44,7 +41,7 @@ class TwitterAggregatorTest {
 
     @SneakyThrows
     @Test
-    void process() {
+    void givenNormalMap_whenCollect_ThenOk() {
         String twitterResponse;
 
         final ZonedDateTime author1CreationDate = ZonedDateTime.of(
@@ -84,7 +81,7 @@ class TwitterAggregatorTest {
                 .getMessage();
         producerSource.append(twitterResponse);
 
-        twitterAggregator.process();
+        twitterAggregator.collect();
 
         final String expected = "{'author':{'id':2,'createdAt':'Wed Dec 2 12:20:59 +0100 2020','name':'Place 1','screenName':'Place 1'},'messages':[{'id':1,'timestampMs':1000,'text':'First message - author 2','user':{'id':2,'createdAt':'Wed Dec 2 12:20:59 +0100 2020','name':'Place 1','screenName':'Place 1'}},{'id':2,'timestampMs':2000,'text':'Second message - author 2','user':{'id':2,'createdAt':'Wed Dec 2 12:20:59 +0100 2020','name':'Place 1','screenName':'Place 1'}}]}\n" +
                 "{'author':{'id':1,'createdAt':'Thu Dec 3 12:20:59 +0100 2020','name':'Place 2','screenName':'Place 2'},'messages':[{'id':1,'timestampMs':1000,'text':'First message','user':{'id':1,'createdAt':'Thu Dec 3 12:20:59 +0100 2020','name':'Place 2','screenName':'Place 2'}},{'id':2,'timestampMs':2000,'text':'Second message','user':{'id':1,'createdAt':'Thu Dec 3 12:20:59 +0100 2020','name':'Place 2','screenName':'Place 2'}}]}\n";
@@ -98,52 +95,22 @@ class TwitterAggregatorTest {
     void givenTwitterAggregator_whenWrongJsonIn_thenEmptyOut() {
 
         producerSource.append("{'dummyAttribute': 1}");
-        twitterAggregator.process();
+        twitterAggregator.collect();
         assertEquals("", redirectedOut.toString());
     }
 
-    @SneakyThrows
-    @Test
-    void print() {
-        Author author = new Author(1L, "Wed Nov 03 13:25:20 +0000 2021", "name", "screenName");
-        //Take some ordered collection
-        Collection<Message> messages = new LinkedList<>(List.of(
-                new Message(11, 12, "message text", author),
-                new Message(21, 22, "message text", author)));
-        twitterAggregator.printByAuthor(author, messages);
 
-        // In Java 15 it should be much better
-        String expected = "{\n" +
-                "    \"author\": {\n" +
-                "        \"id\": 1,\n" +
-                "        \"created\": 2,\n" +
-                "        \"name\": \"name\",\n" +
-                "        \"screenName\": \"screenName\"\n" +
-                "    },\n" +
-                "    \"messages\": [{\n" +
-                "            \"id\": 11,\n" +
-                "            \"timestamp\": 12,\n" +
-                "            \"text\": \"message text\",\n" +
-                "            \"author\": {\n" +
-                "                \"id\": 1,\n" +
-                "                \"created\": 2,\n" +
-                "                \"name\": \"name\",\n" +
-                "                \"screenName\": \"screenName\"\n" +
-                "            }\n" +
-                "        }, {\n" +
-                "            \"id\": 21,\n" +
-                "            \"timestamp\": 22,\n" +
-                "            \"text\": \"message text\",\n" +
-                "            \"author\": {\n" +
-                "                \"id\": 1,\n" +
-                "                \"created\": 2,\n" +
-                "                \"name\": \"name\",\n" +
-                "                \"screenName\": \"screenName\"\n" +
-                "            }\n" +
-                "        }\n" +
-                "    ]\n" +
-                "}";
-        assertEquals(expected, redirectedOut.toString());
-        //JSONAssert.assertEquals(expected, redirectedOut.toString(), true);
+
+    @Test
+    void compareCollections() {
+        Map<String, Set<Integer>> map1 = new TreeMap<>();
+        map1.put("2", new TreeSet<>(Set.of(3,2,1)));
+        map1.put("1", new TreeSet<>(Set.of(1,2,3)));
+
+        Map<String, Set<Integer>> map2 = new TreeMap<>();
+        map2.put("1", new TreeSet<>(Set.of(2,1,3)));
+        map2.put("3", new TreeSet<>(Set.of(1,2,3)));
+
+        assertEquals(map1, map2);
     }
 }
