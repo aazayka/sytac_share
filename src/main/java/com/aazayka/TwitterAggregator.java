@@ -19,11 +19,10 @@ import static java.util.stream.Collectors.groupingBy;
 @AllArgsConstructor
 @Slf4j
 public class TwitterAggregator {
-    private static final int MESSAGE_COUNT_LIMIT = 50;
-    private static final int TIME_LIMIT_MILLIS = 30_000;
+    public static final int MESSAGE_COUNT_LIMIT = 100;
+    public static final int TIME_LIMIT_MILLIS = 30_000;
 
     private final TwitterReader twitterReader;
-
 
     public Map<Author, Collection<Message>> collect() throws TwitterReadException, TwitterAuthenticationException, IOException {
         final long[] lastMessageSentTime = {System.currentTimeMillis()};
@@ -34,6 +33,7 @@ public class TwitterAggregator {
             final long start = System.currentTimeMillis();
             log.debug("Start time: {}", start);
             messagesByAuthor = reader.lines()
+                    //Not fare timeout :)
                     .takeWhile((tmp) -> System.currentTimeMillis() <= start + TIME_LIMIT_MILLIS)
                     .limit(MESSAGE_COUNT_LIMIT)
                     //this is not exactly what required in task, but still some message rate

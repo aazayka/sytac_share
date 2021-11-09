@@ -12,7 +12,7 @@ import java.io.PrintStream;
 import java.util.*;
 
 class ResultPrinterImplTest {
-    private static ResultPrinter printer ;
+    private static ResultPrinter printer;
     private static ByteArrayOutputStream redirectedOut;
 
     @BeforeAll

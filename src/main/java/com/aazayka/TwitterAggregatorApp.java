@@ -21,6 +21,8 @@ public class TwitterAggregatorApp {
         //TODO: add Docker support
 
         //TODO: save message rate
+
+        //TODO: check output to file
     }
 
 }

@@ -31,7 +31,6 @@ public class Message {
                         inputObj.get("id").getAsLong(),
                         inputObj.get("timestamp_ms").getAsLong() / 1000,
                         inputObj.get("text").getAsString(),
-                        // TODO:Cache and return authors?
                         new Author(
                                 authorObject.get("id").getAsLong(),
                                 dateConverter.convertToEpochSeconds(authorObject.getAsJsonObject().get("created_at").getAsString()),
