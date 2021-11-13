@@ -18,8 +18,6 @@ public class TwitterAggregatorApp {
         Map<Author, Collection<Message>> messages = twitterAggregator.collect();
         new ResultPrinterImpl(System.out).print(messages);
 
-        //TODO: add Docker support
-
         //TODO: save message rate
 
         //TODO: check output to file

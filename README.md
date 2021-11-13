@@ -70,7 +70,9 @@ When the assignment is finished, please create a pull request on the master of t
 
 ---
 ## Build and run ##
-1) `mvn clean compile exec:java` if you are not afraid of extra output in console
-2) `mvn clean package && cd target && java -jar java-exercise-1.0.0-SNAPSHOT.jar` option 2
-
+1) `mvn clean compile exec:java` adds some extra output to console
+2) `mvn clean package && cd target && java -jar java-exercise-1.0.0-SNAPSHOT.jar` - no additional output to console
+3) To run with docker 
+   ```mvn compile com.google.cloud.tools:jib-maven-plugin:2.3.0:dockerBuild && docker run -it java-exercise:1.0.0-SNAPSHOT
+```
    
