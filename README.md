@@ -70,9 +70,35 @@ When the assignment is finished, please create a pull request on the master of t
 
 ---
 ## Build and run ##
-1) `mvn clean compile exec:java` adds some extra output to console
-2) `mvn clean package && cd target && java -jar java-exercise-1.0.0-SNAPSHOT.jar` - no additional output to console
-3) To run with docker 
-   ```mvn compile com.google.cloud.tools:jib-maven-plugin:2.3.0:dockerBuild && docker run -it java-exercise:1.0.0-SNAPSHOT
-```
-   
+* Configure output in TwitterAggregatorApp class setting the variable\
+```OUTPUT_FILE_NAME="file name";```\
+In case of empty value output will be written to console
+* Configure message per second file name setting the variable\
+  ```MESSAGE_RATE_FILE_NAME = "filename"```
+  
+1) `mvn compile exec:java` adds some extra output to console
+2) `mvn package && cd target && java -jar java-exercise-1.0.0-SNAPSHOT.jar` - no additional output to console
+3) To run with docker
+    * Create docker volume if not exists
+      ```
+      docker volume create output
+      ```
+      there `output` is the name of the volume 
+    * Configure variables ```MESSAGE_RATE_FILE_NAME``` and optionally ```OUTPUT_FILE_NAME``` to save the files in this docker volume, e.g.   
+        ```
+        private static final String OUTPUT_FILE_NAME = "/out/out.txt"; // to System.out if empty
+        private static final String MESSAGE_RATE_FILE_NAME = "/out/rate.txt";
+        ```
+      there `/out` is the mount point of the volume
+    * build and run application
+      ```
+      mvn compile com.google.cloud.tools:jib-maven-plugin:2.3.0:dockerBuild
+      docker run -it -v output:/out java-exercise:1.0.0-SNAPSHOT
+      ```
+      there `-v` parameter has format `VOLUME_NAME:VOLUME_MOUNT_POINT`
+    
+    The file content in the docker volume can be checked with
+    ```
+    docker run --rm -i -v=VOLUME_NAME:VOLUME_MOUNT_POINT busybox cat FULL_FILE_NAME
+    docker run --rm -i -v=output:/out busybox cat /out/rate.txt
+    ```

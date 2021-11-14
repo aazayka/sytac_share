@@ -9,17 +9,14 @@ import com.aazayka.services.ResultPrinterImpl;
 import com.aazayka.services.TwitterReaderImpl;
 import org.interview.oauth.twitter.TwitterAuthenticationException;
 
-import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 import java.util.Collection;
 import java.util.Map;
 
 public class TwitterAggregatorApp {
 
-    private static final String OUTPUT_FILE_NAME = "/output/out.txt"; // to System.out if empty
-    private static final String MESSAGE_RATE_FILE_NAME = "/output/rate.txt"; // to System.out if empty
+    private static final String OUTPUT_FILE_NAME = "/out/out.txt"; // to System.out if empty
+    private static final String MESSAGE_RATE_FILE_NAME = "/out/rate.txt";
     public static final int MESSAGE_COUNT_LIMIT = 100;
     public static final int TIME_LIMIT_MILLIS = 30_000;
 
@@ -40,8 +37,13 @@ public class TwitterAggregatorApp {
                 new PrintStream(new BufferedOutputStream(new FileOutputStream(OUTPUT_FILE_NAME)));
         new ResultPrinterImpl(outputStream).print(messages);
 
-        //TODO: save message rate
-
+        //Save message rate
+        //results can be checked with
+        //docker run --rm -i -v=output:/output busybox cat MESSAGE_RATE_FILE_NAME
+        BufferedWriter writer = new BufferedWriter(new FileWriter(MESSAGE_RATE_FILE_NAME, true));
+        writer.write(messageRateService.toString());
+        writer.newLine();
+        writer.close();
 
     }
 

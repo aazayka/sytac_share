@@ -46,7 +46,7 @@ public class MessageRateServiceImpl implements MessageRateService {
         }
 
         JsonObject out = new JsonObject();
-        out.addProperty("rate", (float) this.messageCount.get() / (this.finish - this.start));
+        out.addProperty("rate", (float) this.messageCount.get() * 1000/ (this.finish - this.start));
         log.debug(out.toString());
         return out.toString();
     }
