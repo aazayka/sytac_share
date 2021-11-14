@@ -5,7 +5,7 @@
       </encoder>
    </appender>
    <logger name="com.aazayka.services.ResultPrinterImpl" level="INFO" />
-   <root level="info">
+   <root level="debug">
       <appender-ref ref="STDOUT" />
    </root>
 </configuration>

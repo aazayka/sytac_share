@@ -25,6 +25,7 @@ public class ResultPrinterImpl implements ResultPrinter {
     @Override
     public void print(Map<Author, Collection<Message>> messages) {
         messages.forEach(this::printByAuthor);
+        writer.close();
     }
 
     private void printByAuthor(Author author, Collection<Message> messages) {
@@ -36,6 +37,7 @@ public class ResultPrinterImpl implements ResultPrinter {
         json.add("messages", msgJson);
 
         writer.println(json);
+
     }
 
 }

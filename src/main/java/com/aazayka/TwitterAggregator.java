@@ -14,13 +14,13 @@ import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.aazayka.TwitterAggregatorApp.MESSAGE_COUNT_LIMIT;
+import static com.aazayka.TwitterAggregatorApp.TIME_LIMIT_MILLIS;
 import static java.util.stream.Collectors.groupingBy;
 
 @AllArgsConstructor
 @Slf4j
 public class TwitterAggregator {
-    public static final int MESSAGE_COUNT_LIMIT = 100;
-    public static final int TIME_LIMIT_MILLIS = 30_000;
 
     private final TwitterReader twitterReader;
 
