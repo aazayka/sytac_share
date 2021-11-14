@@ -2,6 +2,8 @@ package com.aazayka;
 
 import com.aazayka.entities.Author;
 import com.aazayka.entities.Message;
+import com.aazayka.services.MessageRateService;
+import com.aazayka.services.MessageRateServiceImpl;
 import com.aazayka.services.TwitterReader;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -21,9 +23,11 @@ class TwitterAggregatorTest {
     private static TwitterAggregator twitterAggregator;
 
     @BeforeAll
-    static void setupPrinter() {
+    static void setupTwitterAggregator() {
         TwitterReader producer = () -> new ByteArrayInputStream(producerSource.toString().getBytes());
-        twitterAggregator = new TwitterAggregator(producer);
+        // TODO: put a mock here
+        MessageRateService messageRateService = new MessageRateServiceImpl();
+        twitterAggregator = new TwitterAggregator(producer, messageRateService);
     }
 
     @BeforeEach

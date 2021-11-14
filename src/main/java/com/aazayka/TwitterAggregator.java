@@ -3,6 +3,7 @@ package com.aazayka;
 import com.aazayka.entities.Author;
 import com.aazayka.entities.Message;
 import com.aazayka.exceptions.TwitterReadException;
+import com.aazayka.services.MessageRateService;
 import com.aazayka.services.TwitterReader;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,7 @@ import static java.util.stream.Collectors.groupingBy;
 public class TwitterAggregator {
 
     private final TwitterReader twitterReader;
+    private final MessageRateService messageRateService;
 
     public Map<Author, Collection<Message>> collect() throws TwitterReadException, TwitterAuthenticationException, IOException {
         final long[] lastMessageSentTime = {System.currentTimeMillis()};
@@ -31,7 +33,7 @@ public class TwitterAggregator {
         TreeMap<Author, Collection<Message>> messagesByAuthor;
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(twitterReader.getContent()))) {
             final long start = System.currentTimeMillis();
-            log.debug("Start time: {}", start);
+            messageRateService.start();
             messagesByAuthor = reader.lines()
                     //Not fare timeout :)
                     .takeWhile((tmp) -> System.currentTimeMillis() <= start + TIME_LIMIT_MILLIS)
@@ -42,7 +44,7 @@ public class TwitterAggregator {
                                 String.format("%.3f",
                                     (float) 1000 / (System.currentTimeMillis() - lastMessageSentTime[0])));
                         lastMessageSentTime[0] = System.currentTimeMillis();
-                        messageCount[0]++;
+                        messageRateService.incrementMessageCounter();
                         log.debug(msg);
                     })
                     .map(Message::createFromJson)
@@ -55,7 +57,7 @@ public class TwitterAggregator {
                             Collectors.toCollection(() -> new TreeSet<>(Comparator.comparing(Message::getTimestamp)))
                     ));
 
-            log.debug("Message count: {}; finish time, ms: {}", messageCount[0], System.currentTimeMillis());
+            messageRateService.finish();
         }
         return messagesByAuthor;
     }
